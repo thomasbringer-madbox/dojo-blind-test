@@ -52,16 +52,22 @@ function getGeneratedType(typeSchema) {
         if (!typeSchema.properties) {
           return "Record<string, unknown>";
         }
-  
+      
+        const requiredFields = typeSchema.required ?? [];
+      
         const properties = Object.entries(typeSchema.properties)
           .map(([propertyName, propertySchema]) => {
             const propertyType = getGeneratedType(propertySchema);
-            return `  ${propertyName}: ${propertyType};`;
+            const isRequired = requiredFields.includes(propertyName);
+            const optionalMark = isRequired ? "" : "?";
+      
+            return `  ${propertyName}${optionalMark}: ${propertyType};`;
           })
           .join("\n");
-  
+      
         return `{\n${properties}\n}`;
       }
+      
     default:
       return "";
   }
