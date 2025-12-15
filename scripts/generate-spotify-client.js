@@ -1,5 +1,4 @@
 import { mkdir, writeFile } from "fs/promises";
-
 import openapi from "../openapi.json" assert { type: 'json' };
 
 const targetDirectory = "src/lib/spotify/model";
@@ -17,17 +16,13 @@ async function generateSpotifyClient() {
 }
 
 function generateType(typeName, typeSchema) {  
-  console.log(`Generating type ${typeName}...`);
-
   const imports = new Set();
   const generatedCode = getGeneratedCode(typeName, typeSchema, imports);
-
   writeFile(`${targetDirectory}/${typeName}.ts`, generatedCode);
 }
 
 function getGeneratedCode(typeName, typeSchema, imports) {
   const generatedType = getGeneratedType(typeSchema, imports);
-
   const importLines = Array.from(imports)
     .map(type => `import { ${type} } from "./${type}";`)
     .join("\n");
@@ -39,6 +34,11 @@ function getGeneratedType(typeSchema, imports, depth = 0) {
   if (typeSchema.allOf) {
     const types = typeSchema.allOf.map(subSchema => getGeneratedType(subSchema, imports, depth + 1));
     return types.join(' & ');
+  }
+
+  if (typeSchema.oneOf) {
+    const types = typeSchema.oneOf.map(subSchema => getGeneratedType(subSchema, imports, depth + 1));
+    return types.length > 1 ? `(${types.join(' | ')})` : types[0];
   }
 
   if (typeSchema.$ref) {
@@ -60,7 +60,7 @@ function getGeneratedType(typeSchema, imports, depth = 0) {
     case "array": {
       if (!typeSchema.items) return "unknown[]";
       const itemType = getGeneratedType(typeSchema.items, imports, depth + 1);
-      return `${itemType}[]`;
+      return itemType.includes('|') ? `(${itemType})[]` : `${itemType}[]`;
     }
     case "object": {
       if (!typeSchema.properties) return "Record<string, unknown>";
