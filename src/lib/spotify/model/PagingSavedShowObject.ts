@@ -1,1 +1,1 @@
-export type PagingSavedShowObject = ;
+export type PagingSavedShowObject = Record<string, unknown>;

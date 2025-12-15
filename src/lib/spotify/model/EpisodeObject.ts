@@ -1,1 +1,1 @@
-export type EpisodeObject = ;
+export type EpisodeObject = Record<string, unknown>;
