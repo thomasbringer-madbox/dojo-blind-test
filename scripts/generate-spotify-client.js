@@ -39,8 +39,11 @@ function getGeneratedType(typeSchema) {
   switch (schemaType) {
     case "number":
     case "integer":
+      return "number";
     case "string":
+      return "string";
     case "boolean":
+      return "boolean";
     case "array":
     case "object":
     default:
