@@ -7,7 +7,7 @@ import { getUsersSavedTracks } from './lib/spotify/api/tracks/tracks';
 import { GetUsersSavedTracksParams } from './lib/spotify/model';
 
 const apiToken =
-  'BQBGxAxQw8FbPMB3HK88AObRsRGnMwKqJ35IWG2Ynrg7202jS8swAwmVmn_uSOxuGP6G9wJXR_VQ5NFPCT2kTj22vCC-UaSwuRmqHzgQOuu3zC5KuDlQC5RYQoqTWIjmXSPVrzHYHD1t52MZFTAC7Fw_pla10yMQ1ZSan_m9EvhlLW4HDLrIrYBa2zLSCG0x-y4WuJTK81DqdB8qHY_D5BELgo-nCpsMHSD0f9imv0iu3GaCZK_WHYIzQcUW__Eo-1Seqe6iM3yBbUTHj_cCoRM-9BIjXSAOKKQEF2M7cZZKkxEWpmJx0ISYrQwtYIPi34kOwStnaOPQMihu6OCiV8u7DKSgjuhN3UDIrlri841bLAyo21NeCrRGVX4Bjtm_qscu7BEiG1-GB-xB_LepWk_tn1c';
+  'BQByjEIC7tB87XU7Gzw_5pc5ZuCnLSkQHRNbnmdWunLpAeqIs1kBtKa0_TVNTSSLamxLEq7aSh3gxSEDDGgeI2ev5yjnXp_hE3f63Ujilz6IG80MoQXZTPZ-y_JnnftpeKK87KiFy3CtD6aRKCwTgjzA_hyopQqrvS0qZEVEJ-V1dnJXLuzrm2zOySnoCJQqtqDpAjxvWUULSpMuyV79bIuJrv1lSVFhl5PzMYR3dQWUmRKsa1P8wc4_D_JNqW3Qoszl6dlz6BUtkeTmVSw8s3IL5K9TJ5la64nF2QaHZ6YYGPIY9vBoQmwmhc9rYOmWPdfEO759-jwmdJFBYQFofZieC_Mt8JpTzYwtC55bOlfkga4YD7MnDCDl2xFIEyi9vkoc2QX-crtlH1sk6nYae2CKhGU';
 
 const pickRandomTrack = (tracks: any[]) => {
   return tracks[Math.floor(Math.random() * tracks.length)]!;
