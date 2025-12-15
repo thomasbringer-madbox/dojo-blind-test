@@ -11,6 +11,6 @@ export type ArtistObject = {
   images?: ImageObject[];
   name?: string;
   popularity?: number;
-  type?: string;
+  type?: "artist";
   uri?: string;
 };

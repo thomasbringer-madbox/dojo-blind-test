@@ -54,6 +54,9 @@ function getGeneratedType(typeSchema, imports, depth = 0) {
     case "integer":
       return "number";
     case "string":
+      if (typeSchema.enum) {
+        return typeSchema.enum.map(v => JSON.stringify(v)).join(" | ");
+      }
       return "string";
     case "boolean":
       return "boolean";

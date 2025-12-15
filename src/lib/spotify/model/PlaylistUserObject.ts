@@ -6,6 +6,6 @@ export type PlaylistUserObject = {
   followers?: FollowersObject;
   href?: string;
   id?: string;
-  type?: string;
+  type?: "user";
   uri?: string;
 };

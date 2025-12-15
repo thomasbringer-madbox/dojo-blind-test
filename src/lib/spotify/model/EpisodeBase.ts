@@ -19,9 +19,9 @@ export type EpisodeBase = {
   languages: string[];
   name: string;
   release_date: string;
-  release_date_precision: string;
+  release_date_precision: "year" | "month" | "day";
   resume_point: ResumePointObject;
-  type: string;
+  type: "episode";
   uri: string;
   restrictions?: EpisodeRestrictionObject;
 };
