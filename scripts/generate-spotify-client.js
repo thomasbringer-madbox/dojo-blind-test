@@ -21,21 +21,33 @@ async function generateSpotifyClient() {
 function generateType(typeName, typeSchema) {  
   console.log(`Generating type ${typeName}...`);
 
-  const generatedCode = getGeneratedCode(typeName, typeSchema);
+  const imports = new Set();
+  const generatedCode = getGeneratedCode(typeName, typeSchema, imports);
 
   writeFile(`${targetDirectory}/${typeName}.ts`, generatedCode);
 }
 
-function getGeneratedCode(typeName, typeSchema) {
-  const generatedType = getGeneratedType(typeSchema);
+function getGeneratedCode(typeName, typeSchema, imports) {
+  const generatedType = getGeneratedType(typeSchema, imports);
 
-  return `export type ${typeName} = ${generatedType};`;
+  const importLines = Array.from(imports)
+    .map(type => `import { ${type} } from "./${type}";`)
+    .join("\n");
+
+  return `${importLines}${importLines ? "\n\n" : ""}export type ${typeName} = ${generatedType};`;
 }
 
-function getGeneratedType(typeSchema) {
+function getGeneratedType(typeSchema, imports) {
+  if (typeSchema.$ref) {
+    const refPath = typeSchema.$ref;
+    const refType = refPath.split("/").pop();
+
+    imports.add(refType);
+    return refType;
+  }
+
   const schemaType = typeSchema.type;
 
-  // TO DO: Generate typescript code from schema
   switch (schemaType) {
     case "number":
     case "integer":
@@ -45,7 +57,7 @@ function getGeneratedType(typeSchema) {
     case "boolean":
       return "boolean";
       case "array": {
-        const itemType = getGeneratedType(typeSchema.items);
+        const itemType = getGeneratedType(typeSchema.items, imports);
         return `${itemType}[]`;
       }  
       case "object": {
@@ -57,7 +69,7 @@ function getGeneratedType(typeSchema) {
       
         const properties = Object.entries(typeSchema.properties)
           .map(([propertyName, propertySchema]) => {
-            const propertyType = getGeneratedType(propertySchema);
+            const propertyType = getGeneratedType(propertySchema, imports);
             const isRequired = requiredFields.includes(propertyName);
             const optionalMark = isRequired ? "" : "?";
       
