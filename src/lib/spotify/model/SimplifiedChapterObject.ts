@@ -1,1 +1,3 @@
-export type SimplifiedChapterObject = Record<string, unknown>;
+import { ChapterBase } from "./ChapterBase";
+
+export type SimplifiedChapterObject = ChapterBase;

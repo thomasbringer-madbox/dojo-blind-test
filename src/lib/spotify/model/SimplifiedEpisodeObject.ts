@@ -1,1 +1,3 @@
-export type SimplifiedEpisodeObject = Record<string, unknown>;
+import { EpisodeBase } from "./EpisodeBase";
+
+export type SimplifiedEpisodeObject = EpisodeBase;

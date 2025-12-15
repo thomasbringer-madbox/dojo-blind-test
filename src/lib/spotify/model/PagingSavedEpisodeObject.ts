@@ -1,1 +1,6 @@
-export type PagingSavedEpisodeObject = Record<string, unknown>;
+import { PagingObject } from "./PagingObject";
+import { SavedEpisodeObject } from "./SavedEpisodeObject";
+
+export type PagingSavedEpisodeObject = PagingObject & {
+  items?: SavedEpisodeObject[];
+};

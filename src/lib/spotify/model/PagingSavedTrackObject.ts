@@ -1,1 +1,6 @@
-export type PagingSavedTrackObject = Record<string, unknown>;
+import { PagingObject } from "./PagingObject";
+import { SavedTrackObject } from "./SavedTrackObject";
+
+export type PagingSavedTrackObject = PagingObject & {
+  items?: SavedTrackObject[];
+};

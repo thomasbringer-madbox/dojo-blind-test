@@ -1,1 +1,6 @@
-export type PagingSimplifiedAlbumObject = Record<string, unknown>;
+import { PagingObject } from "./PagingObject";
+import { SimplifiedAlbumObject } from "./SimplifiedAlbumObject";
+
+export type PagingSimplifiedAlbumObject = PagingObject & {
+  items?: SimplifiedAlbumObject[];
+};

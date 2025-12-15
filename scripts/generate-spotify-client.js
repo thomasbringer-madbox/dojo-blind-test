@@ -5,9 +5,7 @@ import openapi from "../openapi.json" assert { type: 'json' };
 const targetDirectory = "src/lib/spotify/model";
 
 async function generateSpotifyClient() {
-  console.log("\nLaunched generate-spotify-client script");
-  console.log('Generating Spotify client from OpenApi spec file...\n')
-  await mkdir(targetDirectory, { recursive: true }); // Generate target directory
+  await mkdir(targetDirectory, { recursive: true });
 
   const schemas = openapi.components.schemas;
   const typesToGenerate = Object.keys(schemas);
@@ -37,11 +35,14 @@ function getGeneratedCode(typeName, typeSchema, imports) {
   return `${importLines}${importLines ? "\n\n" : ""}export type ${typeName} = ${generatedType};`;
 }
 
-function getGeneratedType(typeSchema, imports) {
-  if (typeSchema.$ref) {
-    const refPath = typeSchema.$ref;
-    const refType = refPath.split("/").pop();
+function getGeneratedType(typeSchema, imports, depth = 0) {
+  if (typeSchema.allOf) {
+    const types = typeSchema.allOf.map(subSchema => getGeneratedType(subSchema, imports, depth + 1));
+    return types.join(' & ');
+  }
 
+  if (typeSchema.$ref) {
+    const refType = typeSchema.$ref.split("/").pop();
     imports.add(refType);
     return refType;
   }
@@ -56,32 +57,29 @@ function getGeneratedType(typeSchema, imports) {
       return "string";
     case "boolean":
       return "boolean";
-      case "array": {
-        const itemType = getGeneratedType(typeSchema.items, imports);
-        return `${itemType}[]`;
-      }  
-      case "object": {
-        if (!typeSchema.properties) {
-          return "Record<string, unknown>";
-        }
-      
-        const requiredFields = typeSchema.required ?? [];
-      
-        const properties = Object.entries(typeSchema.properties)
-          .map(([propertyName, propertySchema]) => {
-            const propertyType = getGeneratedType(propertySchema, imports);
-            const isRequired = requiredFields.includes(propertyName);
-            const optionalMark = isRequired ? "" : "?";
-      
-            return `  ${propertyName}${optionalMark}: ${propertyType};`;
-          })
-          .join("\n");
-      
-        return `{\n${properties}\n}`;
-      }
-      
+    case "array": {
+      if (!typeSchema.items) return "unknown[]";
+      const itemType = getGeneratedType(typeSchema.items, imports, depth + 1);
+      return `${itemType}[]`;
+    }
+    case "object": {
+      if (!typeSchema.properties) return "Record<string, unknown>";
+
+      const requiredFields = typeSchema.required ?? [];
+
+      const properties = Object.entries(typeSchema.properties)
+        .map(([propertyName, propertySchema]) => {
+          const propertyType = getGeneratedType(propertySchema, imports, depth + 1);
+          const isRequired = requiredFields.includes(propertyName);
+          const optionalMark = isRequired ? "" : "?";
+          return `  ${propertyName}${optionalMark}: ${propertyType};`;
+        })
+        .join("\n");
+
+      return `{\n${properties}\n}`;
+    }
     default:
-      return "";
+      return "unknown";
   }
 }
 

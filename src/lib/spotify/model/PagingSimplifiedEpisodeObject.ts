@@ -1,1 +1,6 @@
-export type PagingSimplifiedEpisodeObject = Record<string, unknown>;
+import { PagingObject } from "./PagingObject";
+import { SimplifiedEpisodeObject } from "./SimplifiedEpisodeObject";
+
+export type PagingSimplifiedEpisodeObject = PagingObject & {
+  items?: SimplifiedEpisodeObject[];
+};
