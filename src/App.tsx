@@ -3,9 +3,32 @@ import './App.css';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import swal from 'sweetalert';
+import { getUsersSavedTracks } from './lib/spotify/api/tracks/tracks';
+import { GetUsersSavedTracksParams } from './lib/spotify/model';
 
 const apiToken =
-  'BQBewu5upiqpbJyov-q7eUh3MuG-nHsDPYMpUnT0DlZyuKzbTjiv4wA-3rufncOfCsBzXfmycogGIdRz-Yx0XGUPCVwBtqd_5yqWjoVFModkWruot---h2AFIADauL8mD9Kk0vIID7cJADPJ-3tpOEu0JG5FD3u8x95_M0kC4eMhIhbjTCOXt5mY99XfMxpXnbU-5EqpM5E5iqHVYesnxDUJE7uxyi6JkiaNtecPf55jNBJ1j9wGsnSjVGzSnbzk7uwjeMWapgzi8LQzffFo5NHdS4y5MG7bNNmkYYzhMrWiwkGQ3sTjsGnGSN78YYsKoFMMiOLUkFDbfeFbJe1Kgd7X5ruHm7g';
+  'BQByjEIC7tB87XU7Gzw_5pc5ZuCnLSkQHRNbnmdWunLpAeqIs1kBtKa0_TVNTSSLamxLEq7aSh3gxSEDDGgeI2ev5yjnXp_hE3f63Ujilz6IG80MoQXZTPZ-y_JnnftpeKK87KiFy3CtD6aRKCwTgjzA_hyopQqrvS0qZEVEJ-V1dnJXLuzrm2zOySnoCJQqtqDpAjxvWUULSpMuyV79bIuJrv1lSVFhl5PzMYR3dQWUmRKsa1P8wc4_D_JNqW3Qoszl6dlz6BUtkeTmVSw8s3IL5K9TJ5la64nF2QaHZ6YYGPIY9vBoQmwmhc9rYOmWPdfEO759-jwmdJFBYQFofZieC_Mt8JpTzYwtC55bOlfkga4YD7MnDCDl2xFIEyi9vkoc2QX-crtlH1sk6nYae2CKhGU';
+
+const getDeezerPreview = async (
+  trackName: string,
+  artistName: string,
+): Promise<string | null> => {
+  try {
+    const query = encodeURIComponent(`${artistName} ${trackName}`);
+    // Utiliser le proxy Vite configuré
+    const url = `/api/deezer/search?q=${query}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.data && data.data.length > 0) {
+      return data.data[0].preview;
+    }
+    return null;
+  } catch (error) {
+    console.error('Erreur lors de la recherche sur Deezer:', error);
+    return null;
+  }
+};
 
 const fetchTracks = async () => {
   const response = await fetch('https://api.spotify.com/v1/me/tracks', {
@@ -60,17 +83,24 @@ const App = () => {
     data: tracks,
     isSuccess,
     isLoading,
-  } = useQuery({ queryKey: ['tracks'], queryFn: fetchTracks });
+  } = useQuery({
+    queryKey: ['tracks'],
+    queryFn: async () => {
+      const params: GetUsersSavedTracksParams = { limit: 20 };
+      const response = await getUsersSavedTracks(
+        { limit: 20 },
+        { headers: { Authorization: `Bearer ${apiToken}` } }
+      );      
+      return response.data.items;
+    },
+  });
 
-  const [currentTrack, setCurrentTrack] = useState<any | undefined>(
-    undefined,
-  );
+  const [currentTrack, setCurrentTrack] = useState<any | undefined>(undefined);
   const [trackChoices, setTrackChoices] = useState<any[]>([]);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
   useEffect(() => {
-    if (!tracks) {
-      return;
-    }
+    if (!tracks) return;
 
     const rightTrack = pickRandomTrack(tracks);
     setCurrentTrack(rightTrack);
@@ -88,6 +118,22 @@ const App = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchDeezerPreview = async () => {
+      if (!currentTrack?.track) return;
+
+      const trackName = currentTrack.track.name ?? '';
+      const artistName = currentTrack.track.artists?.[0]?.name ?? '';
+
+      const preview = await getDeezerPreview(trackName, artistName);
+      if (preview) {
+        setPreviewUrl(preview);
+      }
+    };
+
+    fetchDeezerPreview();
+  }, [currentTrack]);
+
   return (
     <div className="App">
       <header className="App-header">
@@ -100,19 +146,21 @@ const App = () => {
         ) : (
           <div>
             <div>
-              <audio
-                src={currentTrack?.track?.preview_url ?? ''}
-                controls
-                autoPlay
-              />
+              {previewUrl ? (
+                <audio key={previewUrl} src={previewUrl} controls autoPlay />
+              ) : (
+                <p>Chargement de l'extrait audio...</p>
+              )}
             </div>
           </div>
         )}
       </div>
       <div className="App-buttons">
-        {trackChoices.map(track => (
-          <TrackButton track={track} onClick={() => checkAnswer(track)} />
-        ))}
+        {trackChoices
+          .filter(track => track?.track)
+          .map(track => (
+            <TrackButton track={track} onClick={() => checkAnswer(track)} />
+          ))}
       </div>
     </div>
   );
