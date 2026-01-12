@@ -9,6 +9,43 @@ import { GetUsersSavedTracksParams } from './lib/spotify/model';
 const apiToken =
   'BQByjEIC7tB87XU7Gzw_5pc5ZuCnLSkQHRNbnmdWunLpAeqIs1kBtKa0_TVNTSSLamxLEq7aSh3gxSEDDGgeI2ev5yjnXp_hE3f63Ujilz6IG80MoQXZTPZ-y_JnnftpeKK87KiFy3CtD6aRKCwTgjzA_hyopQqrvS0qZEVEJ-V1dnJXLuzrm2zOySnoCJQqtqDpAjxvWUULSpMuyV79bIuJrv1lSVFhl5PzMYR3dQWUmRKsa1P8wc4_D_JNqW3Qoszl6dlz6BUtkeTmVSw8s3IL5K9TJ5la64nF2QaHZ6YYGPIY9vBoQmwmhc9rYOmWPdfEO759-jwmdJFBYQFofZieC_Mt8JpTzYwtC55bOlfkga4YD7MnDCDl2xFIEyi9vkoc2QX-crtlH1sk6nYae2CKhGU';
 
+const getDeezerPreview = async (
+  trackName: string,
+  artistName: string,
+): Promise<string | null> => {
+  try {
+    const query = encodeURIComponent(`${artistName} ${trackName}`);
+    // Utiliser le proxy Vite configuré
+    const url = `/api/deezer/search?q=${query}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.data && data.data.length > 0) {
+      return data.data[0].preview;
+    }
+    return null;
+  } catch (error) {
+    console.error('Erreur lors de la recherche sur Deezer:', error);
+    return null;
+  }
+};
+
+const fetchTracks = async () => {
+  const response = await fetch('https://api.spotify.com/v1/me/tracks', {
+    method: 'GET',
+    headers: {
+      Authorization: 'Bearer ' + apiToken,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Fetching tracks failed with status ${response.status}`);
+  }
+  const data = (await response.json()) as { items: any[] };
+
+  return data.items;
+};
+
 const pickRandomTrack = (tracks: any[]) => {
   return tracks[Math.floor(Math.random() * tracks.length)]!;
 };
@@ -58,10 +95,9 @@ const App = () => {
     },
   });
 
-  const [currentTrack, setCurrentTrack] = useState<any | undefined>(
-    undefined
-  );
+  const [currentTrack, setCurrentTrack] = useState<any | undefined>(undefined);
   const [trackChoices, setTrackChoices] = useState<any[]>([]);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
   useEffect(() => {
     if (!tracks) return;
@@ -82,6 +118,22 @@ const App = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchDeezerPreview = async () => {
+      if (!currentTrack?.track) return;
+
+      const trackName = currentTrack.track.name ?? '';
+      const artistName = currentTrack.track.artists?.[0]?.name ?? '';
+
+      const preview = await getDeezerPreview(trackName, artistName);
+      if (preview) {
+        setPreviewUrl(preview);
+      }
+    };
+
+    fetchDeezerPreview();
+  }, [currentTrack]);
+
   return (
     <div className="App">
       <header className="App-header">
@@ -94,19 +146,21 @@ const App = () => {
         ) : (
           <div>
             <div>
-              <audio
-                src={currentTrack?.track?.preview_url ?? ''}
-                controls
-                autoPlay
-              />
+              {previewUrl ? (
+                <audio key={previewUrl} src={previewUrl} controls autoPlay />
+              ) : (
+                <p>Chargement de l'extrait audio...</p>
+              )}
             </div>
           </div>
         )}
       </div>
       <div className="App-buttons">
-        {trackChoices.map(track => (
-          <TrackButton track={track} onClick={() => checkAnswer(track)} />
-        ))}
+        {trackChoices
+          .filter(track => track?.track)
+          .map(track => (
+            <TrackButton track={track} onClick={() => checkAnswer(track)} />
+          ))}
       </div>
     </div>
   );
